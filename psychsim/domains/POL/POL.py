@@ -107,9 +107,12 @@ class Person(Agent):
 		tree = makeTree(approachMatrix(comfort,comfort_cost,100))
 		world.setDynamics(comfort,work,tree)
 
-		risk=stateKey(commercial,'risk')
-		tree = makeTree(approachMatrix(health,risk,0))
-		world.setDynamics(comfort,work,tree)
+		risk = stateKey('commercial','risk')
+		initialHealth = 100.
+		decline_perc = .1
+		# make future this where we hve the value for time T and time T+1, and we are defining the new health value
+		tree = makeTree(KeyedMatrix({makeFuture(health): KeyedVector({health: 1.-decline_perc, CONSTANT: decline_perc*initialHealth, makeFuture(risk): -decline_perc})}))
+		world.setDynamics(health,work,tree)
 
 		## impacts of eat
 		tree = makeTree(approachMatrix(hunger,.9,0))
@@ -141,6 +144,11 @@ class Person(Agent):
 		world.setDynamics(relation,external_force_obj.do_good,tree)
 		tree = makeTree(approachMatrix(relation,.1,-1.))
 		world.setDynamics(relation,external_force_obj.do_bad,tree)
+
+	# ignore the other people unless they are not civilians
+	def init_beliefs(self):
+		relevant = {key for key in self.world.state.keys() if state2agent(key) == self.name or state2agent(key)[:8] != 'civilian'}
+		return self.resetBelief(include=relevant)
 
 
 class Region(Agent):
@@ -208,7 +216,8 @@ resi_length_range=(residential.center_y-(residential.length/2), residential.cent
 
 start_time=time()
 civilians=[]
-for j in range(10):
+civilian_count=1000
+for j in range(civilian_count):
 	starting_location=(randint(resi_width_range[0], resi_width_range[1]), randint(resi_length_range[0], resi_length_range[1]))
 	civilian = Person('civilian %d' %(j+1), starting_location, world, True, True, True)
 	civilians.append(civilian.name)
@@ -216,18 +225,23 @@ for j in range(10):
 # world.setOrder([{'civilian1'}])
 world.setOrder([set(civilians) | {environment_agent.name}])
 
+for name in civilians:
+	world.agents[name].init_beliefs()
+
 for i in range(24):
 	start_round=time()
 	print('\n \tStep %d: ' %(i+1))
 	newState = world.step()
 	#world.explainAction(newState)
 	world.printState(newState)
-	end_round=time()
-	print('Step time: '+str(round(end_round-start_round)))
+	end_round = time()
+	time_elapsed = round(end_round - start_round)
+	print('Step time: %02d:%02d:%02d' %(int(time_elapsed/3600), int((time_elapsed%3600)/60), time_elapsed%60))
 	print('----------------------------------------------------------------------')
 
 end_time=time()
-print('Overall time; '+str(round(end_time-start_time)))
+time_overall = end_time - start_time
+print('Overall time for %d civilians: %02d:%02d:%02d' %(civilian_count, int(time_elapsed/3600), int(time_elapsed%3600/60), time_overall%60))
 
 # print('x: ' + str(world.getState(civilian1.name,'x')) + ' , y: ' + str(world.getState(civilian1.name,'y')))
 # print('goal x: ' + str(world.getState(civilian1.name,'goal_x')) + ' , goal y: ' + str(world.getState(civilian1.name,'goal_y')))
