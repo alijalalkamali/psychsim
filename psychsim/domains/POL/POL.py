@@ -241,7 +241,7 @@ for i in range(24):
 
 end_time=time()
 time_overall = end_time - start_time
-print('Overall time for %d civilians: %02d:%02d:%02d' %(civilian_count, int(time_elapsed/3600), int(time_elapsed%3600/60), time_overall%60))
+print('Overall time for %d civilians: %02d:%02d:%02d' %(civilian_count, int(time_overall/3600), int(time_overall%3600/60), time_overall%60))
 
 # print('x: ' + str(world.getState(civilian1.name,'x')) + ' , y: ' + str(world.getState(civilian1.name,'y')))
 # print('goal x: ' + str(world.getState(civilian1.name,'goal_x')) + ' , goal y: ' + str(world.getState(civilian1.name,'goal_y')))
